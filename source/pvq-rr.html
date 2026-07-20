@@ -1,0 +1,1535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PVQ-RR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Literata:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#FBFAF8;
+  --ink:#262B3F;
+  --ink-soft:#6E7285;
+  --line:#E5E2DA;
+  --line-strong:#C9C5BA;
+  --focus:#3D5A80;
+  --q-openness:#D98E2B;
+  --q-enhancement:#BC5A5C;
+  --q-conservation:#4C7CA8;
+  --q-transcendence:#5B9A74;
+  --q-face:#96597E;
+  --q-humility:#4F8D91;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:"IBM Plex Sans",-apple-system,"Segoe UI",sans-serif;
+  font-size:16px;line-height:1.6;
+}
+html[lang="zh-CN"] body{font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",sans-serif}
+
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+:focus:not(:focus-visible){outline:none}
+
+/* ---- top bar ---- */
+.topbar{position:sticky;top:0;z-index:10;background:var(--paper);border-bottom:1px solid var(--line)}
+.topbar-inner{max-width:36rem;margin:0 auto;padding:.7rem 1.25rem;display:flex;align-items:center;justify-content:space-between}
+.wordmark{font-family:Literata,Georgia,serif;font-weight:600;font-size:1.05rem;letter-spacing:.02em}
+.lang-toggle{display:flex;gap:0;border:1px solid var(--line-strong);border-radius:.4rem;overflow:hidden}
+.lang-toggle button{border:none;background:transparent;padding:.3rem .7rem;font-size:.8125rem;font-weight:500;cursor:pointer;color:var(--ink-soft)}
+.lang-toggle button[aria-pressed="true"]{background:var(--focus);color:#fff}
+
+main{max-width:36rem;margin:0 auto;padding:2.25rem 1.25rem 4rem}
+
+/* ---- typography ---- */
+.eyebrow{
+  font-family:"IBM Plex Sans",-apple-system,"Segoe UI",sans-serif;
+  font-size:.6875rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-soft);margin:0 0 .4rem;
+}
+html[lang="zh-CN"] .eyebrow{text-transform:none;letter-spacing:.25em}
+.screen-title{font-family:Literata,Georgia,serif;font-weight:600;font-size:1.6rem;line-height:1.35;margin:0 0 .75rem}
+html[lang="zh-CN"] .screen-title{font-family:"Songti SC","Noto Serif CJK SC","SimSun",serif}
+.item-text{
+  font-family:Literata,Georgia,serif;font-weight:500;
+  font-size:clamp(1.35rem,2.6vw,1.75rem);line-height:1.5;margin:0 0 2rem;
+}
+html[lang="zh-CN"] .item-text{font-family:"Songti SC","Noto Serif CJK SC","SimSun",serif;font-weight:600}
+.num-data{font-family:"IBM Plex Sans",sans-serif;font-weight:500;font-variant-numeric:tabular-nums}
+.soft{color:var(--ink-soft)}
+p{margin:0 0 1rem}
+
+/* ---- progress ---- */
+.progress{height:2px;background:var(--line);border-radius:1px;margin:.4rem 0 2.25rem}
+.progress i{display:block;height:100%;background:var(--focus);transition:width .2s ease}
+
+/* ---- buttons ---- */
+.btn{
+  display:inline-block;padding:.8rem 1.6rem;border-radius:.55rem;
+  border:1px solid var(--focus);background:var(--focus);color:#fff;
+  font-size:1rem;font-weight:500;cursor:pointer;
+}
+.btn[aria-disabled="true"]{opacity:.45;cursor:not-allowed}
+.btn-ghost{background:transparent;color:var(--focus)}
+.linkish{background:none;border:none;color:var(--focus);cursor:pointer;font-size:.9375rem;padding:.2rem 0;text-decoration:underline;text-underline-offset:3px}
+
+/* ---- start screen ---- */
+.subtitle{font-family:Literata,Georgia,serif;font-size:1.05rem;color:var(--ink-soft);margin:0 0 1.5rem}
+html[lang="zh-CN"] .subtitle{font-family:"Songti SC","Noto Serif CJK SC","SimSun",serif}
+.instructions{border-left:2px solid var(--line-strong);padding-left:1rem;margin:0 0 2rem}
+.wording{margin:0 0 2rem}
+.wording-btns{display:flex;gap:.75rem;flex-wrap:wrap;margin:.6rem 0 .4rem}
+.wording-btns button{
+  flex:1 1 12rem;display:flex;align-items:center;gap:.7rem;min-height:56px;
+  padding:.6rem 1rem;border:1px solid var(--line);border-radius:.55rem;
+  background:#fff;cursor:pointer;text-align:left;font-size:.9375rem;
+}
+.wording-btns button .dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--line-strong);flex:none;background:#fff}
+.wording-btns button[aria-pressed="true"]{border-color:var(--focus)}
+.wording-btns button[aria-pressed="true"] .dot{border-color:var(--focus);background:var(--focus);box-shadow:inset 0 0 0 3px #fff}
+.warn{color:#A0522D;font-size:.875rem;margin:.2rem 0 0}
+.privacy{font-size:.875rem;color:var(--ink-soft)}
+.start-actions{display:flex;align-items:center;gap:1.25rem;margin:1.5rem 0 0;flex-wrap:wrap}
+
+/* ---- item screen ---- */
+.item-anim{animation:item-in 160ms ease-out}
+@keyframes item-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.options{display:flex;flex-direction:column;gap:.5rem;margin:.75rem 0 1.75rem}
+.opt{
+  display:flex;align-items:center;gap:.8rem;min-height:56px;width:100%;
+  padding:.55rem 1rem;border:1px solid var(--line);border-radius:.55rem;
+  background:#fff;cursor:pointer;text-align:left;font-size:1rem;
+}
+.opt .dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--line-strong);flex:none;background:#fff}
+.opt[aria-checked="true"]{border-color:var(--focus)}
+.opt[aria-checked="true"] .dot{border-color:var(--focus);background:var(--focus);box-shadow:inset 0 0 0 3px #fff}
+.opt .num{display:none}
+@media(min-width:560px){
+  .opt .num{
+    display:flex;align-items:center;justify-content:center;flex:none;
+    width:22px;height:22px;border:1px solid var(--line);border-radius:5px;
+    font-size:.75rem;color:var(--ink-soft);font-variant-numeric:tabular-nums;
+  }
+}
+.item-footer{display:flex;justify-content:space-between;align-items:center;font-size:.875rem;color:var(--ink-soft)}
+@media(pointer:coarse){.key-hint{display:none}}
+
+/* ---- review ---- */
+.gap-list{display:flex;flex-wrap:wrap;gap:.5rem;margin:0 0 1.75rem}
+.gap-list button{
+  padding:.45rem .8rem;border:1px solid var(--line-strong);border-radius:.45rem;
+  background:#fff;cursor:pointer;font-size:.875rem;color:var(--focus);
+}
+.helper{font-size:.875rem;color:var(--ink-soft);margin:.6rem 0 0}
+
+/* ---- results ---- */
+.wheel-wrap{width:min(92vw,560px);margin:1.25rem auto 1rem}
+.wheel-wrap svg{display:block;width:100%;height:auto}
+.sector{animation:sector-in 500ms cubic-bezier(0.22,1,0.36,1) both}
+.sector.neg{fill-opacity:.45}
+.sector.sel{stroke:var(--ink);stroke-width:1.5}
+@keyframes sector-in{from{transform:scale(0)}to{transform:scale(1)}}
+.hit{fill:transparent;cursor:pointer}
+.rim-label{font-size:11px;fill:var(--ink-soft)}
+html[lang="zh-CN"] .rim-label{font-size:14px}
+.qname{font-size:16px;font-weight:600}
+.hub-name{font-size:12px;fill:var(--ink-soft);letter-spacing:.08em;paint-order:stroke;stroke:var(--paper);stroke-width:3px}
+.hub-num{font-size:22px;font-weight:500;fill:var(--ink);font-variant-numeric:tabular-nums;paint-order:stroke;stroke:var(--paper);stroke-width:4px}
+@media(max-width:559px){.rim-label,.qname{display:none}}
+
+.detail{border:1px solid var(--line);border-radius:.75rem;padding:1.1rem 1.25rem;margin:0 0 2rem;background:#fff}
+.detail-head{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;margin:0 0 .3rem}
+.detail-head h3{font-family:Literata,Georgia,serif;font-size:1.1rem;font-weight:600;margin:0}
+html[lang="zh-CN"] .detail-head h3{font-family:"Songti SC","Noto Serif CJK SC","SimSun",serif}
+.swatch{display:inline-block;width:11px;height:11px;border-radius:3px;flex:none;align-self:center}
+.detail-scores{font-size:.8125rem;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.detail-def{font-size:.9375rem;color:var(--ink-soft);margin:0 0 .9rem}
+.detail-items{list-style:none;margin:0;padding:0}
+.detail-items li{display:flex;justify-content:space-between;gap:1rem;padding:.45rem 0;border-top:1px solid var(--line);font-size:.875rem}
+.detail-items .di-rating{white-space:nowrap;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+
+.rank{margin:0 0 2.25rem}
+.rank-head,.rank-row{
+  display:grid;grid-template-columns:12px minmax(0,10rem) 1fr 3.4rem 3.2rem;
+  gap:.6rem;align-items:center;
+}
+.rank-head{font-size:.6875rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);padding:0 .4rem .35rem}
+html[lang="zh-CN"] .rank-head{text-transform:none;letter-spacing:.15em}
+.rank-row{
+  width:100%;border:none;background:none;cursor:pointer;text-align:left;
+  padding:.42rem .4rem;border-top:1px solid var(--line);font-size:.875rem;
+}
+.rank-row:hover{background:#fff}
+.rank-row.sel{background:#fff;box-shadow:inset 2px 0 0 var(--ink)}
+.rank-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar{position:relative;height:8px;border-radius:2px;background:transparent}
+.bar::before{content:"";position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--line-strong)}
+.bar i{position:absolute;top:0;bottom:0;border-radius:2px}
+.bar i.pos{left:50%}
+.bar i.neg{right:50%}
+.rank-c{text-align:right;font-variant-numeric:tabular-nums}
+.rank-r{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink-soft)}
+
+.higher{margin:0 0 2.25rem}
+.higher-row{
+  display:grid;grid-template-columns:12px 1fr 3.4rem 3.2rem;gap:.6rem;align-items:center;
+  padding:.5rem .4rem;border-top:1px solid var(--line);font-size:.9375rem;
+}
+.border-note{font-size:.8125rem;color:var(--ink-soft);margin:.75rem 0 0}
+
+.export-row{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;margin:0 0 2.5rem}
+.method-note{font-size:.8125rem;color:var(--ink-soft)}
+
+footer.applique{max-width:36rem;margin:0 auto;padding:0 1.25rem 3rem;font-size:.75rem;color:var(--ink-soft)}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <span class="wordmark">PVQ-RR</span>
+    <div class="lang-toggle" role="group" aria-label="Language / 语言">
+      <button type="button" data-action="lang" data-lang="en" aria-pressed="false">EN</button>
+      <button type="button" data-action="lang" data-lang="zh" aria-pressed="false">中文</button>
+    </div>
+  </div>
+</header>
+<main id="app"></main>
+<footer class="applique" id="foot"></footer>
+
+<script type="application/json" id="pvq-data">{
+ "meta": {
+  "instrument": "PVQ-RR (57 items, 6-point scale)",
+  "source": "Schwartz, S. H. (2021). A Repository of Schwartz Value Scales... ORPC 2(2). https://doi.org/10.9707/2307-0919.1173",
+  "en_source_file": "PVQ-RR Eng M&F (filename=102&article=1173&context=orpc)",
+  "zh_source_file": "PVQ-RR Chinese Simplified MF (filename=98&article=1173&context=orpc)",
+  "item28_note": "EN doc item 28 corrupted by page break; canonical text restored and cross-verified (Stimulation item st3... st2? -> items 10,28,43)."
+ },
+ "scale": {
+  "en": [
+   "Not like me at all",
+   "Not like me",
+   "A little like me",
+   "Moderately like me",
+   "Like me",
+   "Very much like me"
+  ],
+  "zh": [
+   "完全不像我",
+   "不像我",
+   "仅有一点点像我",
+   "有点像我",
+   "像我",
+   "非常像我"
+  ]
+ },
+ "instructions": {
+  "en": "Here we briefly describe different people. Please read each description and think about how much that person is or is not like you. Select the answer that shows how much the person described is like you.",
+  "zh": "以下每条简要描述了不同的人。请阅读并思考这个人在多大程度上像，或者不像您。请选择相应的选项，来表示所描述的人在多大程度上像您。"
+ },
+ "header_question": {
+  "en": "HOW MUCH LIKE YOU IS THIS PERSON?",
+  "zh": "这个人有多像您？"
+ },
+ "items": {
+  "en": {
+   "m": [
+    "It is important to him to form his views independently.",
+    "It is important to him that his country is secure and stable.",
+    "It is important to him to have a good time.",
+    "It is important to him to avoid upsetting other people.",
+    "It is important to him that the weak and vulnerable in society be protected.",
+    "It is important to him that people do what he says they should.",
+    "It is important to him never to think he deserves more than other people.",
+    "It is important to him to care for nature.",
+    "It is important to him that no one should ever shame him.",
+    "It is important to him always to look for different things to do.",
+    "It is important to him to take care of people he is close to.",
+    "It is important to him to have the power that money can bring.",
+    "It is very important to him to avoid disease and protect his health.",
+    "It is important to him to be tolerant toward all kinds of people and groups.",
+    "It is important to him never to violate rules or regulations.",
+    "It is important to him to make his own decisions about his life.",
+    "It is important to him to have ambitions in life.",
+    "It is important to him to maintain traditional values and ways of thinking.",
+    "It is important to him that people he knows have full confidence in him.",
+    "It is important to him to be wealthy.",
+    "It is important to him to take part in activities to defend nature.",
+    "It is important to him never to annoy anyone.",
+    "It is important to him to develop his own opinions.",
+    "It is important to him to protect his public image.",
+    "It is very important to him to help the people dear to him.",
+    "It is important to him to be personally safe and secure.",
+    "It is important to him to be a dependable and trustworthy friend.",
+    "It is important to him to take risks that make life exciting.",
+    "It is important to him to have the power to make people do what he wants.",
+    "It is important to him to plan his activities independently.",
+    "It is important to him to follow rules even when no-one is watching.",
+    "It is important to him to be very successful.",
+    "It is important to him to follow his family’s customs or the customs of a religion.",
+    "It is important to him to listen to and understand people who are different from him.",
+    "It is important to him to have a strong state that can defend its citizens.",
+    "It is important to him to enjoy life’s pleasures.",
+    "It is important to him that every person in the world have equal opportunities in life.",
+    "It is important to him to be humble.",
+    "It is important to him to figure things out himself.",
+    "It is important to him to honor the traditional practices of his culture.",
+    "It is important to him to be the one who tells others what to do.",
+    "It is important to him to obey all the laws.",
+    "It is important to him to have all sorts of new experiences.",
+    "It is important to him to own expensive things that show his wealth.",
+    "It is important to him to protect the natural environment from destruction or pollution.",
+    "It is important to him to take advantage of every opportunity to have fun.",
+    "It is important to him to concern himself with every need of his dear ones.",
+    "It is important to him that people recognize what he achieves.",
+    "It is important to him never to be humiliated.",
+    "It is important to him that his country protect itself against all threats.",
+    "It is important to him never to make other people angry.",
+    "It is important to him that everyone be treated justly, even people he doesn’t know.",
+    "It is important to him to avoid anything dangerous.",
+    "It is important to him to be satisfied with what he has and not ask for more.",
+    "It is important to him that all his friends and family can rely on him completely.",
+    "It is important to him to be free to choose what he does by himself.",
+    "It is important to him to accept people even when he disagrees with them."
+   ],
+   "f": [
+    "It is important to her to form her views independently.",
+    "It is important to her that her country is secure and stable.",
+    "It is important to her to have a good time.",
+    "It is important to her to avoid upsetting other people.",
+    "It is important to her that the weak and vulnerable in society be protected.",
+    "It is important to her that people do what she says they should.",
+    "It is important to her never to think she deserves more than other people.",
+    "It is important to her to care for nature.",
+    "It is important to her that no one should ever shame her.",
+    "It is important to her always to look for different things to do.",
+    "It is important to her to take care of people she is close to.",
+    "It is important to her to have the power that money can bring.",
+    "It is very important to her to avoid disease and protect her health.",
+    "It is important to her to be tolerant toward all kinds of people and groups.",
+    "It is important to her never to violate rules or regulations.",
+    "It is important to her to make her own decisions about her life.",
+    "It is important to her to have ambitions in life.",
+    "It is important to her to maintain traditional values and ways of thinking.",
+    "It is important to her that people she knows have full confidence in her.",
+    "It is important to her to be wealthy.",
+    "It is important to her to take part in activities to defend nature.",
+    "It is important to her never to annoy anyone.",
+    "It is important to her to develop her own opinions.",
+    "It is important to her to protect her public image.",
+    "It is very important to her to help the people dear to her.",
+    "It is important to her to be personally safe and secure.",
+    "It is important to her to be a dependable and trustworthy friend.",
+    "It is important to her to take risks that make life exciting.",
+    "It is important to her to have the power to make people do what she wants.",
+    "It is important to her to plan her activities independently.",
+    "It is important to her to follow rules even when no-one is watching.",
+    "It is important to her to be very successful.",
+    "It is important to her to follow her family’s customs or the customs of a religion.",
+    "It is important to her to listen to and understand people who are different from her.",
+    "It is important to her to have a strong state that can defend its citizens.",
+    "It is important to her to enjoy life’s pleasures.",
+    "It is important to her that every person in the world have equal opportunities in life.",
+    "It is important to her to be humble.",
+    "It is important to her to figure things out herself.",
+    "It is important to her to honor the traditional practices of her culture.",
+    "It is important to her to be the one who tells others what to do.",
+    "It is important to her to obey all the laws.",
+    "It is important to her to have all sorts of new experiences.",
+    "It is important to her to own expensive things that show her wealth.",
+    "It is important to her to protect the natural environment from destruction or pollution.",
+    "It is important to her to take advantage of every opportunity to have fun.",
+    "It is important to her to concern herself with every need of her dear ones.",
+    "It is important to her that people recognize what she achieves.",
+    "It is important to her never to be humiliated.",
+    "It is important to her that her country protect itself against all threats.",
+    "It is important to her never to make other people angry.",
+    "It is important to her that everyone be treated justly, even people she doesn’t know.",
+    "It is important to her to avoid anything dangerous.",
+    "It is important to her to be satisfied with what she has and not ask for more.",
+    "It is important to her that all her friends and family can rely on her completely.",
+    "It is important to her to be free to choose what she does by herself.",
+    "It is important to her to accept people even when she disagrees with them."
+   ]
+  },
+  "zh": {
+   "m": [
+    "能独立形成自己的看法，对他来说是重要的。",
+    "国家安全稳定对他来说是重要的。",
+    "过得享受对他来说是重要的。",
+    "避免惹恼别人对他来说是重要的。",
+    "社会中的弱势群体得到保护，对他来说是重要的。",
+    "他重视别人按他说的去做。",
+    "他从不认为自己理应比别人得到更多。",
+    "他重视关心保护大自然。",
+    "不被任何人羞辱，对他来说是重要的。",
+    "常常找不同的事情来做，对他来说是重要的。",
+    "能照顾身边的人，对他来说是重要的。",
+    "他重视拥有金钱带来的权力。",
+    "避免生病、保持健康，对他来说非常重要。",
+    "包容各种不同的人和群体，对他来说是重要的。",
+    "从不违反规章制度，对他来说是重要的。",
+    "能独立决定自己的人生，对他来说是重要的。",
+    "在生活中拥有雄心壮志，对他来说是重要的。",
+    "他重视保持传统价值观和思维方式。",
+    "他重视得到认识的人的完全信任。",
+    "拥有财富对他来说是重要的。",
+    "他重视参与保护自然的活动。",
+    "不让任何人不悦对他来说是重要的。",
+    "他重视形成自己的观点。",
+    "保护自身的公众形象对他来说是重要的。",
+    "能帮助自己亲爱的人，对他来说很重要。",
+    "他重视自身的安全和保障。",
+    "成为一个别人可以依靠和信任的朋友，对他来说是重要的。",
+    "他重视通过冒险使生活变得精彩。",
+    "他重视使别人按自己意愿做事的权力。",
+    "能独立计划自己的活动，对他来说是重要的。",
+    "即便无人监管依旧遵守规则，对他来说是重要的。",
+    "人生非常成功，对他来说是重要的。",
+    "他重视遵从家庭的习俗或宗教的传统。",
+    "他重视聆听和理解那些和他不同的人。",
+    "政府强大并能保护它的公民，对他来说是重要的。",
+    "他重视享受生活的乐趣。",
+    "世上每个人在生活中拥有同等的机会，对他来说是重要的。",
+    "他重视谦虚。",
+    "他重视自己弄清问题。",
+    "尊崇文化中的传统做法，对他来说是重要的。",
+    "担当别人的领导或指挥，对他来说是重要的。",
+    "他重视遵守所有法律。",
+    "有各种不同的新鲜经历，对他来说是重要的。",
+    "拥有能显示财富的昂贵物品，对他来说很重要。",
+    "保护大自然免遭破坏或污染，对他来说是重要的。",
+    "他重视每一个开心的机会。",
+    "他重视用心关怀亲朋好友的每一个需求。",
+    "他重视别人对他的成就之赏识。",
+    "永远不被羞辱对他来说是重要的。",
+    "国家能抵御外面一切威胁，对他来说是重要的。",
+    "从不惹他人生气，对他来说是重要的。",
+    "所有人（即便是陌生人）都受到公正的对待，对他来说是重要的。",
+    "避开一切危险的事，对他来说是重要的。",
+    "满足于已经得到的而不要求更多，对他来说是重要的。",
+    "所有朋友和家人都可以依靠他，对他来说是重要的。",
+    "他重视选择的自由。",
+    "他重视接纳别人（包括持异议者）。"
+   ],
+   "f": [
+    "能独立形成自己的看法，对她来说是重要的。",
+    "国家安全稳定对她来说是重要的。",
+    "过得享受对她来说是重要的。",
+    "避免惹恼别人对她来说是重要的。",
+    "社会中的弱势群体得到保护，对她来说是重要的。",
+    "她重视别人按她说的去做。",
+    "她从不认为自己理应比别人得到更多。",
+    "她重视关心保护大自然。",
+    "不被任何人羞辱，对她来说是重要的。",
+    "常常找不同的事情来做，对她来说是重要的。",
+    "能照顾身边的人，对她来说是重要的。",
+    "她重视拥有金钱带来的权力。",
+    "避免生病、保持健康，对她来说非常重要。",
+    "包容各种不同的人和群体，对她来说是重要的。",
+    "从不违反规章制度，对她来说是重要的。",
+    "能独立决定自己的人生，对她来说是重要的。",
+    "在生活中拥有雄心壮志，对她来说是重要的。",
+    "她重视保持传统价值观和思维方式。",
+    "她重视得到认识的人的完全信任。",
+    "拥有财富对她来说是重要的。",
+    "她重视参与保护自然的活动。",
+    "不让任何人不悦对她来说是重要的。",
+    "她重视形成自己的观点。",
+    "保护自身的公众形象对她来说是重要的。",
+    "能帮助自己亲爱的人，对她来说很重要。",
+    "她重视自身的安全和保障。",
+    "成为一个别人可以依靠和信任的朋友，对她来说是重要的。",
+    "她重视通过冒险使生活变得精彩。",
+    "她重视使别人按自己意愿做事的权力。",
+    "能独立计划自己的活动，对她来说是重要的。",
+    "即便无人监管依旧遵守规则，对她来说是重要的。",
+    "人生非常成功，对她来说是重要的。",
+    "她重视遵从家庭的习俗或宗教的传统。",
+    "她重视聆听和理解那些和她不同的人。",
+    "政府强大并能保护它的公民，对她来说是重要的。",
+    "她重视享受生活的乐趣。",
+    "世上每个人在生活中拥有同等的机会，对她来说是重要的。",
+    "她重视谦虚。",
+    "她重视自己弄清问题。",
+    "尊崇文化中的传统做法，对她来说是重要的。",
+    "担当别人的领导或指挥，对她来说是重要的。",
+    "她重视遵守所有法律。",
+    "有各种不同的新鲜经历，对她来说是重要的。",
+    "拥有能显示财富的昂贵物品，对她来说很重要。",
+    "保护大自然免遭破坏或污染，对她来说是重要的。",
+    "她重视每一个开心的机会。",
+    "她重视用心关怀亲朋好友的每一个需求。",
+    "她重视别人对她的成就之赏识。",
+    "永远不被羞辱对她来说是重要的。",
+    "国家能抵御外面一切威胁，对她来说是重要的。",
+    "从不惹他人生气，对她来说是重要的。",
+    "所有人（即便是陌生人）都受到公正的对待，对她来说是重要的。",
+    "避开一切危险的事，对她来说是重要的。",
+    "满足于已经得到的而不要求更多，对她来说是重要的。",
+    "所有朋友和家人都可以依靠她，对她来说是重要的。",
+    "她重视选择的自由。",
+    "她重视接纳别人（包括持异议者）。"
+   ]
+  }
+ },
+ "values": [
+  {
+   "id": "sd_thought",
+   "order": 0,
+   "quadrant": "openness",
+   "items": [
+    1,
+    23,
+    39
+   ],
+   "name": {
+    "en": "Self-Direction–Thought",
+    "zh": "自主·思想"
+   },
+   "def": {
+    "en": "Freedom to cultivate one's own ideas and abilities",
+    "zh": "自由地发展自己的想法与能力"
+   }
+  },
+  {
+   "id": "sd_action",
+   "order": 1,
+   "quadrant": "openness",
+   "items": [
+    16,
+    30,
+    56
+   ],
+   "name": {
+    "en": "Self-Direction–Action",
+    "zh": "自主·行动"
+   },
+   "def": {
+    "en": "Freedom to determine one's own actions",
+    "zh": "自由地决定自己的行动"
+   }
+  },
+  {
+   "id": "stimulation",
+   "order": 2,
+   "quadrant": "openness",
+   "items": [
+    10,
+    28,
+    43
+   ],
+   "name": {
+    "en": "Stimulation",
+    "zh": "刺激"
+   },
+   "def": {
+    "en": "Excitement, novelty, and change",
+    "zh": "追求新奇、变化与兴奋"
+   }
+  },
+  {
+   "id": "hedonism",
+   "order": 3,
+   "quadrant": "openness",
+   "items": [
+    3,
+    36,
+    46
+   ],
+   "name": {
+    "en": "Hedonism",
+    "zh": "享乐"
+   },
+   "def": {
+    "en": "Pleasure and sensuous gratification",
+    "zh": "追求快乐与感官满足"
+   }
+  },
+  {
+   "id": "achievement",
+   "order": 4,
+   "quadrant": "enhancement",
+   "items": [
+    17,
+    32,
+    48
+   ],
+   "name": {
+    "en": "Achievement",
+    "zh": "成就"
+   },
+   "def": {
+    "en": "Success according to social standards",
+    "zh": "依照社会标准取得成功"
+   }
+  },
+  {
+   "id": "power_dominance",
+   "order": 5,
+   "quadrant": "enhancement",
+   "items": [
+    6,
+    29,
+    41
+   ],
+   "name": {
+    "en": "Power–Dominance",
+    "zh": "权力·支配"
+   },
+   "def": {
+    "en": "Power through exercising control over people",
+    "zh": "通过支配他人行使权力"
+   }
+  },
+  {
+   "id": "power_resources",
+   "order": 6,
+   "quadrant": "enhancement",
+   "items": [
+    12,
+    20,
+    44
+   ],
+   "name": {
+    "en": "Power–Resources",
+    "zh": "权力·资源"
+   },
+   "def": {
+    "en": "Power through control of material and social resources",
+    "zh": "通过掌控物质与社会资源获得权力"
+   }
+  },
+  {
+   "id": "face",
+   "order": 7,
+   "quadrant": "border",
+   "items": [
+    9,
+    24,
+    49
+   ],
+   "name": {
+    "en": "Face",
+    "zh": "面子"
+   },
+   "def": {
+    "en": "Maintaining one's public image and avoiding humiliation",
+    "zh": "维护公众形象、避免受辱"
+   }
+  },
+  {
+   "id": "security_personal",
+   "order": 8,
+   "quadrant": "conservation",
+   "items": [
+    13,
+    26,
+    53
+   ],
+   "name": {
+    "en": "Security–Personal",
+    "zh": "安全·个人"
+   },
+   "def": {
+    "en": "Safety in one's immediate environment",
+    "zh": "直接环境中的人身安全"
+   }
+  },
+  {
+   "id": "security_societal",
+   "order": 9,
+   "quadrant": "conservation",
+   "items": [
+    2,
+    35,
+    50
+   ],
+   "name": {
+    "en": "Security–Societal",
+    "zh": "安全·社会"
+   },
+   "def": {
+    "en": "Safety and stability in the wider society",
+    "zh": "社会整体的安全与稳定"
+   }
+  },
+  {
+   "id": "tradition",
+   "order": 10,
+   "quadrant": "conservation",
+   "items": [
+    18,
+    33,
+    40
+   ],
+   "name": {
+    "en": "Tradition",
+    "zh": "传统"
+   },
+   "def": {
+    "en": "Maintaining cultural, family, or religious traditions",
+    "zh": "维护文化、家庭或宗教传统"
+   }
+  },
+  {
+   "id": "conformity_rules",
+   "order": 11,
+   "quadrant": "conservation",
+   "items": [
+    15,
+    31,
+    42
+   ],
+   "name": {
+    "en": "Conformity–Rules",
+    "zh": "遵从·规则"
+   },
+   "def": {
+    "en": "Compliance with rules, laws, and formal obligations",
+    "zh": "遵守规则、法律与正式义务"
+   }
+  },
+  {
+   "id": "conformity_interpersonal",
+   "order": 12,
+   "quadrant": "conservation",
+   "items": [
+    4,
+    22,
+    51
+   ],
+   "name": {
+    "en": "Conformity–Interpersonal",
+    "zh": "遵从·人际"
+   },
+   "def": {
+    "en": "Avoiding upsetting or harming other people",
+    "zh": "避免惹恼或伤害他人"
+   }
+  },
+  {
+   "id": "humility",
+   "order": 13,
+   "quadrant": "border",
+   "items": [
+    7,
+    38,
+    54
+   ],
+   "name": {
+    "en": "Humility",
+    "zh": "谦逊"
+   },
+   "def": {
+    "en": "Recognizing one's insignificance in the larger scheme of things",
+    "zh": "认识到自己在天地间的渺小"
+   }
+  },
+  {
+   "id": "benevolence_dependability",
+   "order": 14,
+   "quadrant": "transcendence",
+   "items": [
+    19,
+    27,
+    55
+   ],
+   "name": {
+    "en": "Benevolence–Dependability",
+    "zh": "仁慈·可靠"
+   },
+   "def": {
+    "en": "Being a reliable and trustworthy member of the ingroup",
+    "zh": "做亲友可以依靠、信赖的人"
+   }
+  },
+  {
+   "id": "benevolence_care",
+   "order": 15,
+   "quadrant": "transcendence",
+   "items": [
+    11,
+    25,
+    47
+   ],
+   "name": {
+    "en": "Benevolence–Care",
+    "zh": "仁慈·关爱"
+   },
+   "def": {
+    "en": "Devotion to the welfare of ingroup members",
+    "zh": "关心所爱之人的福祉"
+   }
+  },
+  {
+   "id": "universalism_concern",
+   "order": 16,
+   "quadrant": "transcendence",
+   "items": [
+    5,
+    37,
+    52
+   ],
+   "name": {
+    "en": "Universalism–Concern",
+    "zh": "博爱·关怀"
+   },
+   "def": {
+    "en": "Commitment to equality, justice, and protection for all people",
+    "zh": "致力于平等、正义并保护所有人"
+   }
+  },
+  {
+   "id": "universalism_nature",
+   "order": 17,
+   "quadrant": "transcendence",
+   "items": [
+    8,
+    21,
+    45
+   ],
+   "name": {
+    "en": "Universalism–Nature",
+    "zh": "博爱·自然"
+   },
+   "def": {
+    "en": "Preservation of the natural environment",
+    "zh": "保护自然环境"
+   }
+  },
+  {
+   "id": "universalism_tolerance",
+   "order": 18,
+   "quadrant": "transcendence",
+   "items": [
+    14,
+    34,
+    57
+   ],
+   "name": {
+    "en": "Universalism–Tolerance",
+    "zh": "博爱·包容"
+   },
+   "def": {
+    "en": "Accepting and understanding those who are different",
+    "zh": "接纳并理解与自己不同的人"
+   }
+  }
+ ],
+ "higher_order": [
+  {
+   "id": "openness",
+   "name": {
+    "en": "Openness to Change",
+    "zh": "乐于改变"
+   },
+   "combine": [
+    "sd_thought",
+    "sd_action",
+    "stimulation",
+    "hedonism"
+   ]
+  },
+  {
+   "id": "transcendence",
+   "name": {
+    "en": "Self-Transcendence",
+    "zh": "自我超越"
+   },
+   "combine": [
+    "universalism_nature",
+    "universalism_concern",
+    "universalism_tolerance",
+    "benevolence_care",
+    "benevolence_dependability"
+   ]
+  },
+  {
+   "id": "enhancement",
+   "name": {
+    "en": "Self-Enhancement",
+    "zh": "自我提升"
+   },
+   "combine": [
+    "achievement",
+    "power_dominance",
+    "power_resources"
+   ]
+  },
+  {
+   "id": "conservation",
+   "name": {
+    "en": "Conservation",
+    "zh": "保守"
+   },
+   "combine": [
+    "security_personal",
+    "security_societal",
+    "tradition",
+    "conformity_rules",
+    "conformity_interpersonal"
+   ]
+  }
+ ]
+}</script>
+<script>
+'use strict';
+const DATA = JSON.parse(document.getElementById('pvq-data').textContent);
+const CIRCLE = DATA.values.slice().sort((a,b)=>a.order-b.order);
+const VBYID = {}; DATA.values.forEach(v=>{VBYID[v.id]=v;});
+
+const STRINGS = {
+  title:            {en:'PVQ-RR', zh:'PVQ-RR'},
+  subtitle:         {en:'Portrait Values Questionnaire — Revised', zh:'肖像价值观问卷（修订版）'},
+  wording_label:    {en:'Questionnaire wording', zh:'问卷用语'},
+  wording_help:     {en:'The portraits are worded as “he” or “she”. Choose the version that matches you.', zh:'问卷条目以“他”或“她”描述人物，请选择与您相符的版本。'},
+  wording_m:        {en:'About him (male wording)', zh:'男性版（他）'},
+  wording_f:        {en:'About her (female wording)', zh:'女性版（她）'},
+  wording_required: {en:'Choose a wording version to begin.', zh:'请先选择问卷用语版本。'},
+  privacy:          {en:'Your answers stay in this browser. Nothing is uploaded.', zh:'您的作答仅保存在本浏览器中，不会上传。'},
+  begin:            {en:'Begin', zh:'开始作答'},
+  resume:           {en:'Continue — {n} of 57 answered', zh:'继续作答 — 已完成 {n} / 57'},
+  start_over:       {en:'Start over', zh:'重新开始'},
+  confirm_clear:    {en:'This clears all your answers.', zh:'这将清除您的所有作答。'},
+  portrait_of:      {en:'Portrait {n} of 57', zh:'第 {n} / 57 题'},
+  portrait_short:   {en:'Portrait {n}', zh:'第 {n} 题'},
+  back:             {en:'Back', zh:'上一题'},
+  key_hint:         {en:'Press 1–6 to answer', zh:'按 1–6 键作答'},
+  review_title:     {en:'Almost done', zh:'即将完成'},
+  unanswered_intro: {en:'These portraits still need an answer:', zh:'以下条目尚未作答：'},
+  review_done_title:{en:'All 57 portraits answered', zh:'全部 57 题已作答'},
+  review_done_body: {en:'Ready to see your value portrait.', zh:'可以查看您的价值观画像了。'},
+  see_results:      {en:'See your value portrait', zh:'查看您的价值观画像'},
+  results_need_all: {en:'Results unlock when all 57 portraits are answered.', zh:'回答完全部 57 题后即可查看结果。'},
+  results_title:    {en:'Your value portrait', zh:'您的价值观画像'},
+  mrat_line:        {en:'Your mean rating across all 57 portraits (MRAT) is {x}. Scores below are centered on it and show each value’s relative priority.', zh:'您在全部 57 题上的平均评分（MRAT）为 {x}。以下分数已按此中心化，反映各价值观的相对优先程度。'},
+  wheel_hint:       {en:'Tap a sector to see what it means.', zh:'点击扇区查看含义。'},
+  col_value:        {en:'Value', zh:'价值观'},
+  col_raw:          {en:'Raw', zh:'原始均分'},
+  col_centered:     {en:'Centered', zh:'中心化分数'},
+  your_answers:     {en:'Your answers', zh:'您的作答'},
+  higher_title:     {en:'Four higher-order values', zh:'四个高阶价值观'},
+  border_note:      {en:'Face and Humility sit on the borders of the circle and are not folded into any quadrant.', zh:'「面子」与「谦逊」位于价值观环的边界，未并入任何象限。'},
+  export_csv:       {en:'Download CSV', zh:'下载 CSV'},
+  export_json:      {en:'Download JSON', zh:'下载 JSON'},
+  export_png:       {en:'Download image', zh:'下载图片'},
+  method_note:      {en:'Scored per Schwartz’s official PVQ-RR coding instructions: each value is the mean of its 3 items, centered on your mean rating (MRAT) to correct for scale use.', zh:'依据 Schwartz 官方 PVQ-RR 计分说明：每个价值观取其 3 个条目的均分，并以您的总体均分（MRAT）中心化，以校正量表使用偏差。'},
+  footer_license:   {en:'PVQ-RR © Shalom H. Schwartz — free for academic research; commercial use requires a license (shalom.schwartz@huji.ac.il). Source: ORPC, doi:10.9707/2307-0919.1173.', zh:'PVQ-RR © Shalom H. Schwartz——学术研究免费使用，商业用途需授权（shalom.schwartz@huji.ac.il）。来源：ORPC，doi:10.9707/2307-0919.1173。'},
+};
+
+/* ---------- state & persistence ---------- */
+const KEY = 'pvqrr.v1';
+let storageOK = true;
+function loadSaved(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(!raw) return null;
+    const s = JSON.parse(raw);
+    if(!s || typeof s !== 'object') return null;
+    const st = {
+      screen: ['start','items','review','results'].includes(s.screen) ? s.screen : 'start',
+      lang: s.lang === 'zh' ? 'zh' : 'en',
+      gender: s.gender === 'm' || s.gender === 'f' ? s.gender : null,
+      cursor: Number.isInteger(s.cursor) && s.cursor >= 1 && s.cursor <= 57 ? s.cursor : 1,
+      answers: {},
+    };
+    if(s.answers && typeof s.answers === 'object'){
+      for(let n = 1; n <= 57; n++){
+        const v = s.answers[String(n)];
+        if(Number.isInteger(v) && v >= 1 && v <= 6) st.answers[String(n)] = v;
+      }
+    }
+    return st;
+  }catch(e){
+    try{ localStorage.removeItem(KEY); }catch(e2){ storageOK = false; }
+    return null;
+  }
+}
+let state = loadSaved() || {
+  screen: 'start',
+  lang: (navigator.language || 'en').toLowerCase().startsWith('zh') ? 'zh' : 'en',
+  gender: null,
+  cursor: 1,
+  answers: {},
+};
+function save(){
+  if(!storageOK) return;
+  try{ localStorage.setItem(KEY, JSON.stringify(state)); }
+  catch(e){ storageOK = false; }
+}
+
+/* ---------- helpers ---------- */
+const t = (key, vars) => {
+  let s = STRINGS[key][state.lang];
+  if(vars) for(const k in vars) s = s.replace('{'+k+'}', vars[k]);
+  return s;
+};
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const answeredCount = () => Object.keys(state.answers).length;
+const firstUnanswered = () => { for(let n=1;n<=57;n++) if(!state.answers[String(n)]) return n; return null; };
+const hueVar = v => v.quadrant === 'border' ? '--q-'+v.id : '--q-'+v.quadrant;
+const fmt2 = x => x.toFixed(2);
+const fmt2s = x => (x >= 0 ? '+' : '') + x.toFixed(2);
+const fmt4 = x => x.toFixed(4);
+const RM = matchMedia('(prefers-reduced-motion: reduce)');
+const FINE = matchMedia('(pointer: fine)');
+
+/* ---------- scoring (pure) ---------- */
+function score(answers){
+  let sum = 0;
+  for(let n = 1; n <= 57; n++) sum += answers[String(n)];
+  const mrat = sum / 57;
+  const values = CIRCLE.map(v => {
+    const raw = v.items.reduce((s,i)=>s+answers[String(i)],0) / 3;
+    return { id: v.id, raw, centered: raw - mrat };
+  });
+  const byId = {}; values.forEach(s=>{byId[s.id]=s;});
+  const higher = DATA.higher_order.map(h => {
+    const raw = h.combine.reduce((s,id)=>s+byId[id].raw,0) / h.combine.length;
+    return { id: h.id, raw, centered: raw - mrat };
+  });
+  return { mrat, values, byId, higher };
+}
+
+/* ---------- rendering ---------- */
+const app = document.getElementById('app');
+const foot = document.getElementById('foot');
+let advanceTimer = null;
+let lastItemCursor = null;
+let sel = null;           // selected value id on results
+let lastScore = null;
+
+function render(){
+  document.documentElement.lang = state.lang === 'zh' ? 'zh-CN' : 'en';
+  document.querySelectorAll('.lang-toggle button').forEach(b=>{
+    b.setAttribute('aria-pressed', String(b.dataset.lang === state.lang));
+  });
+  if(state.screen === 'items' && !state.gender) state.screen = 'start';
+  if(state.screen === 'results' && answeredCount() < 57) state.screen = 'review';
+  switch(state.screen){
+    case 'start':   app.innerHTML = viewStart(); break;
+    case 'items':   app.innerHTML = viewItem(); break;
+    case 'review':  app.innerHTML = viewReview(); break;
+    case 'results': app.innerHTML = viewResults(); break;
+  }
+  foot.textContent = t('footer_license');
+  if(state.screen !== 'items') lastItemCursor = null;
+  if(state.screen !== 'results'){ sel = null; lastScore = null; }
+}
+
+let wordingWarn = false;
+function viewStart(){
+  const n = answeredCount();
+  const primary = n > 0
+    ? '<button class="btn" data-action="resume">'+esc(t('resume',{n}))+'</button>'
+    : '<button class="btn" data-action="begin" '+(state.gender?'':'aria-disabled="true"')+'>'+esc(t('begin'))+'</button>';
+  return (
+  '<h1 class="screen-title">'+esc(t('title'))+'</h1>'+
+  '<p class="subtitle">'+esc(t('subtitle'))+'</p>'+
+  '<p class="instructions">'+esc(DATA.instructions[state.lang])+'</p>'+
+  '<div class="wording">'+
+    '<p class="eyebrow">'+esc(t('wording_label'))+'</p>'+
+    '<p class="soft" style="font-size:.9375rem">'+esc(t('wording_help'))+'</p>'+
+    '<div class="wording-btns" role="radiogroup" aria-label="'+esc(t('wording_label'))+'">'+
+      ['m','f'].map(g=>
+        '<button type="button" role="radio" aria-checked="'+(state.gender===g)+'" aria-pressed="'+(state.gender===g)+'" data-action="wording" data-g="'+g+'">'+
+        '<span class="dot"></span><span>'+esc(t(g==='m'?'wording_m':'wording_f'))+'</span></button>'
+      ).join('')+
+    '</div>'+
+    (wordingWarn && !state.gender ? '<p class="warn" role="alert">'+esc(t('wording_required'))+'</p>' : '')+
+  '</div>'+
+  '<p class="privacy">'+esc(t('privacy'))+'</p>'+
+  '<div class="start-actions">'+primary+
+    (n>0 ? '<button class="linkish" data-action="startover">'+esc(t('start_over'))+'</button>' : '')+
+  '</div>');
+}
+
+function viewItem(){
+  const n = state.cursor;
+  const anim = lastItemCursor !== n;
+  lastItemCursor = n;
+  const item = DATA.items[state.lang][state.gender][n-1];
+  const chosen = state.answers[String(n)];
+  const pct = (answeredCount() / 57 * 100).toFixed(1);
+  return (
+  '<p class="eyebrow" aria-live="polite">'+esc(t('portrait_of',{n}))+'</p>'+
+  '<div class="progress"><i style="width:'+pct+'%"></i></div>'+
+  '<div class="'+(anim?'item-anim':'')+'">'+
+    '<h1 class="item-text">'+esc(item)+'</h1>'+
+    '<p class="eyebrow">'+esc(DATA.header_question[state.lang])+'</p>'+
+    '<div class="options" role="radiogroup" aria-label="'+esc(DATA.header_question[state.lang])+'">'+
+      DATA.scale[state.lang].map((label,i)=>
+        '<button type="button" class="opt" role="radio" aria-checked="'+(chosen===i+1)+'" data-action="answer" data-rating="'+(i+1)+'">'+
+        '<span class="dot"></span><span class="num">'+(i+1)+'</span><span>'+esc(label)+'</span></button>'
+      ).join('')+
+    '</div>'+
+  '</div>'+
+  '<div class="item-footer">'+
+    (n>1 ? '<button class="linkish" data-action="back">← '+esc(t('back'))+'</button>' : '<span></span>')+
+    '<span class="key-hint">'+esc(t('key_hint'))+'</span>'+
+  '</div>');
+}
+
+function viewReview(){
+  const missing = [];
+  for(let n=1;n<=57;n++) if(!state.answers[String(n)]) missing.push(n);
+  if(missing.length === 0){
+    return (
+    '<h1 class="screen-title">'+esc(t('review_done_title'))+'</h1>'+
+    '<p>'+esc(t('review_done_body'))+'</p>'+
+    '<p style="margin-top:1.5rem"><button class="btn" data-action="results">'+esc(t('see_results'))+'</button></p>');
+  }
+  return (
+  '<h1 class="screen-title">'+esc(t('review_title'))+'</h1>'+
+  '<p>'+esc(t('unanswered_intro'))+'</p>'+
+  '<div class="gap-list">'+
+    missing.map(n=>'<button type="button" data-action="goto" data-n="'+n+'">'+esc(t('portrait_short',{n}))+'</button>').join('')+
+  '</div>'+
+  '<button class="btn" aria-disabled="true">'+esc(t('see_results'))+'</button>'+
+  '<p class="helper">'+esc(t('results_need_all'))+'</p>');
+}
+
+/* ---------- wheel ---------- */
+const CX=320, CY=320, ZR=170, INR=64, OUTR=276, SPAN=106, SEC=360/19, GAP=1.5;
+function XY(th, r){
+  const a = th * Math.PI / 180;
+  return [CX + r * Math.sin(a), CY - r * Math.cos(a)];
+}
+function P(th, r){ const [x,y] = XY(th,r); return x.toFixed(2)+' '+y.toFixed(2); }
+function wedge(a1, a2, rI, rO){
+  return 'M '+P(a1,rO)+' A '+rO+' '+rO+' 0 0 1 '+P(a2,rO)+
+         ' L '+P(a2,rI)+' A '+rI+' '+rI+' 0 0 0 '+P(a1,rI)+' Z';
+}
+const QUAD_SPANS = [
+  {id:'openness', from:0, to:4},
+  {id:'enhancement', from:4, to:7},
+  {id:'conservation', from:8, to:13},
+  {id:'transcendence', from:14, to:19},
+];
+function buildWheel(sc){
+  let g = '';
+  // dashed zero-ring + tiny 0
+  g += '<circle cx="'+CX+'" cy="'+CY+'" r="'+ZR+'" fill="none" stroke="var(--line-strong)" stroke-dasharray="3 4"/>';
+  g += '<text x="'+(CX+7)+'" y="'+(CY-ZR-5)+'" font-size="10" fill="var(--line-strong)">0</text>';
+  // quadrant arc bands (face & humility deliberately unbanded)
+  for(const q of QUAD_SPANS){
+    const a1 = q.from*SEC + GAP/2, a2 = q.to*SEC - GAP/2;
+    g += '<path d="M '+P(a1,291)+' A 291 291 0 0 1 '+P(a2,291)+'" fill="none" stroke="var(--q-'+q.id+')" stroke-width="6" stroke-linecap="round"/>';
+    const right = q.id === 'openness' || q.id === 'enhancement';
+    const top = q.id === 'openness' || q.id === 'transcendence';
+    const name = DATA.higher_order.find(h=>h.id===q.id).name[state.lang];
+    g += '<text class="qname" x="'+(right?610:30)+'" y="'+(top?40:610)+'" text-anchor="'+(right?'end':'start')+'" fill="var(--q-'+q.id+')">'+esc(name)+'</text>';
+  }
+  // sectors + rim labels
+  let hits = '';
+  for(const v of CIRCLE){
+    const s = sc.byId[v.id];
+    const k = v.order;
+    const a1 = k*SEC + GAP/2, a2 = (k+1)*SEC - GAP/2, mid = (k+0.5)*SEC;
+    const cl = Math.max(-2.5, Math.min(2.5, s.centered));
+    const r = ZR + cl/2.5*SPAN;
+    let rI = Math.min(ZR, r), rO = Math.max(ZR, r);
+    if(rO - rI < 2){ rO = rI + 2; }
+    const [ox, oy] = XY(mid, ZR);
+    g += '<path class="sector'+(s.centered<0?' neg':'')+(sel===v.id?' sel':'')+'" id="sec-'+v.id+
+         '" d="'+wedge(a1,a2,rI,rO)+'" fill="var('+hueVar(v)+')" style="transform-origin:'+
+         ox.toFixed(1)+'px '+oy.toFixed(1)+'px;animation-delay:'+(k*30)+'ms"/>';
+    hits += '<path class="hit" d="'+wedge(a1,a2,INR,OUTR)+'" data-action="pick" data-value="'+v.id+
+            '"><title>'+esc(v.name[state.lang])+' · '+fmt2s(s.centered)+'</title></path>';
+    // rim label(s)
+    const name = v.name[state.lang];
+    let lines;
+    if(state.lang === 'en' && name.includes('–')){
+      const i = name.indexOf('–');
+      lines = [name.slice(0, i+1), name.slice(i+1)];
+    } else lines = [name];
+    const flip = mid > 90 && mid < 270;
+    const rot = flip ? mid - 180 : mid;
+    const radii = lines.length === 1 ? [306] : (flip ? [300, 312] : [312, 300]);
+    lines.forEach((ln, li)=>{
+      const [lx, ly] = XY(mid, radii[li]);
+      g += '<text class="rim-label" x="'+lx.toFixed(1)+'" y="'+ly.toFixed(1)+
+           '" text-anchor="middle" dominant-baseline="middle" transform="rotate('+rot.toFixed(2)+' '+lx.toFixed(1)+' '+ly.toFixed(1)+')">'+esc(ln)+'</text>';
+    });
+  }
+  // center readout
+  g += '<text id="hub-name" class="hub-name" x="'+CX+'" y="'+(CY-8)+'" text-anchor="middle">MRAT</text>';
+  g += '<text id="hub-num" class="hub-num" x="'+CX+'" y="'+(CY+18)+'" text-anchor="middle">'+fmt2(sc.mrat)+'</text>';
+  g += hits;
+  return '<svg viewBox="0 0 640 640" role="img" aria-label="Schwartz value circumplex">'+g+'</svg>';
+}
+
+/* ---------- results ---------- */
+function detailCard(id, sc){
+  if(!id) return '<p style="margin:0" class="soft">'+esc(t('wheel_hint'))+'</p>';
+  const v = VBYID[id], s = sc.byId[id];
+  return (
+  '<div class="detail-head">'+
+    '<span class="swatch" style="background:var('+hueVar(v)+')"></span>'+
+    '<h3>'+esc(v.name[state.lang])+'</h3>'+
+    '<span class="detail-scores">'+esc(t('col_raw'))+' '+fmt2(s.raw)+' · '+esc(t('col_centered'))+' '+fmt2s(s.centered)+'</span>'+
+  '</div>'+
+  '<p class="detail-def">'+esc(v.def[state.lang])+'</p>'+
+  '<p class="eyebrow" style="margin-bottom:0">'+esc(t('your_answers'))+'</p>'+
+  '<ul class="detail-items">'+
+    v.items.map(n=>{
+      const r = state.answers[String(n)];
+      return '<li><span>'+esc(DATA.items[state.lang][state.gender][n-1])+'</span>'+
+             '<span class="di-rating">'+r+' · '+esc(DATA.scale[state.lang][r-1])+'</span></li>';
+    }).join('')+
+  '</ul>');
+}
+
+function viewResults(){
+  const sc = lastScore = score(state.answers);
+  const ranked = sc.values.slice().sort((a,b)=>b.centered-a.centered);
+  return (
+  '<h1 class="screen-title">'+esc(t('results_title'))+'</h1>'+
+  '<p>'+esc(t('mrat_line',{x:fmt2(sc.mrat)}))+'</p>'+
+  '<div class="wheel-wrap">'+buildWheel(sc)+'</div>'+
+  '<div class="detail" id="detail">'+detailCard(sel, sc)+'</div>'+
+  '<div class="rank">'+
+    '<div class="rank-head"><span></span><span>'+esc(t('col_value'))+'</span><span></span>'+
+      '<span style="text-align:right">'+esc(t('col_centered'))+'</span>'+
+      '<span style="text-align:right">'+esc(t('col_raw'))+'</span></div>'+
+    ranked.map(s=>{
+      const v = VBYID[s.id];
+      const w = Math.min(Math.abs(s.centered), 2.5)/2.5*50;
+      return '<button type="button" class="rank-row'+(sel===s.id?' sel':'')+'" data-action="pick" data-value="'+s.id+'">'+
+        '<span class="swatch" style="background:var('+hueVar(v)+')"></span>'+
+        '<span class="rank-name">'+esc(v.name[state.lang])+'</span>'+
+        '<span class="bar"><i class="'+(s.centered<0?'neg':'pos')+'" style="width:'+w.toFixed(2)+'%;background:var('+hueVar(v)+')"></i></span>'+
+        '<span class="rank-c">'+fmt2s(s.centered)+'</span>'+
+        '<span class="rank-r">'+fmt2(s.raw)+'</span></button>';
+    }).join('')+
+  '</div>'+
+  '<div class="higher">'+
+    '<p class="eyebrow">'+esc(t('higher_title'))+'</p>'+
+    sc.higher.map(h=>{
+      const hd = DATA.higher_order.find(x=>x.id===h.id);
+      return '<div class="higher-row">'+
+        '<span class="swatch" style="background:var(--q-'+h.id+')"></span>'+
+        '<span>'+esc(hd.name[state.lang])+'</span>'+
+        '<span class="rank-c">'+fmt2s(h.centered)+'</span>'+
+        '<span class="rank-r">'+fmt2(h.raw)+'</span></div>';
+    }).join('')+
+    '<p class="border-note">'+esc(t('border_note'))+'</p>'+
+  '</div>'+
+  '<div class="export-row">'+
+    '<button class="btn btn-ghost" data-action="csv">'+esc(t('export_csv'))+'</button>'+
+    '<button class="btn btn-ghost" data-action="json">'+esc(t('export_json'))+'</button>'+
+    '<button class="btn btn-ghost" data-action="png">'+esc(t('export_png'))+'</button>'+
+    '<button class="linkish" data-action="startover">'+esc(t('start_over'))+'</button>'+
+  '</div>'+
+  '<p class="method-note">'+esc(t('method_note'))+'</p>');
+}
+
+function pick(id){
+  sel = id;
+  const sc = lastScore || score(state.answers);
+  document.getElementById('detail').innerHTML = detailCard(id, sc);
+  document.querySelectorAll('.sector').forEach(p=>p.classList.toggle('sel', p.id === 'sec-'+id));
+  document.querySelectorAll('.rank-row').forEach(b=>b.classList.toggle('sel', b.dataset.value === id));
+  setHub(id, sc);
+}
+function setHub(id, sc){
+  const nameEl = document.getElementById('hub-name');
+  const numEl = document.getElementById('hub-num');
+  if(!nameEl || !numEl) return;
+  if(id){
+    nameEl.textContent = VBYID[id].name[state.lang];
+    numEl.textContent = fmt2s(sc.byId[id].centered);
+  } else {
+    nameEl.textContent = 'MRAT';
+    numEl.textContent = fmt2(sc.mrat);
+  }
+}
+
+/* ---------- exports ---------- */
+function csvField(s){
+  s = String(s);
+  return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+}
+function download(name, blob){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+}
+function exportCSV(){
+  const sc = score(state.answers);
+  const rows = ['type,id,label,raw,centered'];
+  for(let n=1;n<=57;n++){
+    rows.push('answer,'+n+','+csvField(DATA.items[state.lang][state.gender][n-1])+','+state.answers[String(n)]+',');
+  }
+  rows.push('mrat,,MRAT,'+fmt4(sc.mrat)+',');
+  for(const s of sc.values){
+    rows.push('value,'+s.id+','+csvField(VBYID[s.id].name[state.lang])+','+fmt4(s.raw)+','+fmt4(s.centered));
+  }
+  for(const h of sc.higher){
+    const hd = DATA.higher_order.find(x=>x.id===h.id);
+    rows.push('higher,'+h.id+','+csvField(hd.name[state.lang])+','+fmt4(h.raw)+','+fmt4(h.centered));
+  }
+  download('pvqrr-results.csv', new Blob(['\uFEFF'+rows.join('\r\n')], {type:'text/csv;charset=utf-8'}));
+}
+function exportJSON(){
+  const sc = score(state.answers);
+  const obj = {
+    exported_at: new Date().toISOString(),
+    instrument: 'PVQ-RR',
+    lang: state.lang,
+    gender: state.gender,
+    answers: state.answers,
+    mrat: sc.mrat,
+    values: sc.values.map(s=>({id:s.id, raw:s.raw, centered:s.centered})),
+    higher_order: sc.higher.map(h=>({id:h.id, raw:h.raw, centered:h.centered})),
+  };
+  download('pvqrr-results.json', new Blob([JSON.stringify(obj, null, 2)], {type:'application/json'}));
+}
+function exportPNG(){
+  const sc = score(state.answers);
+  const css = getComputedStyle(document.documentElement);
+  const C = n => css.getPropertyValue(n).trim();
+  const zh = state.lang === 'zh';
+  const serif = zh ? '"Songti SC","Noto Serif CJK SC","SimSun",serif' : 'Literata,Georgia,serif';
+  const sans = zh ? '"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",sans-serif' : '"IBM Plex Sans",-apple-system,"Segoe UI",sans-serif';
+  const hdr = s => zh ? s : s.toUpperCase();
+  const W = 960, pad = 56, colX = 530, colW = W - pad - colX;
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  const wrap = (text, maxW) => {
+    const parts = zh ? Array.from(text) : text.split(' ');
+    const join = zh ? '' : ' ';
+    const lines = [];
+    let cur = '';
+    for(const p of parts){
+      const test = cur ? cur + join + p : p;
+      if(ctx.measureText(test).width > maxW && cur){ lines.push(cur); cur = p; }
+      else cur = test;
+    }
+    if(cur) lines.push(cur);
+    return lines;
+  };
+  // measure pass (layout depends on wrapped line counts)
+  ctx.font = '400 15px ' + sans;
+  const mratLines = wrap(t('mrat_line',{x:fmt2(sc.mrat)}), W - 2*pad);
+  ctx.font = '400 12px ' + sans;
+  const borderLines = wrap(t('border_note'), W - 2*pad);
+  const methodLines = wrap(t('method_note'), W - 2*pad);
+  ctx.font = '400 11px ' + sans;
+  const licenseLines = wrap(t('footer_license'), W - 2*pad);
+  const headerBottom = 152 + (mratLines.length - 1) * 22;
+  const ws = 0.75, wcx = 260, wcy = headerBottom + 244;
+  const wheelBottom = wcy + 244;
+  const rankTop = headerBottom + 26, rowH = 24;
+  const rankBottom = rankTop + 14 + 19 * rowH;
+  const higherTop = Math.max(wheelBottom, rankBottom) + 44;
+  const borderTop = higherTop + 24 + 4 * 26 + 14;
+  const methodTop = borderTop + borderLines.length * 18 + 16;
+  const licTop = methodTop + methodLines.length * 18 + 14;
+  const H = licTop + licenseLines.length * 18 + pad - 14;
+  canvas.width = W * 2; canvas.height = H * 2;
+  ctx.scale(2, 2);
+  ctx.fillStyle = C('--paper'); ctx.fillRect(0, 0, W, H);
+  // header
+  ctx.fillStyle = C('--ink-soft');
+  ctx.font = '600 12px ' + sans;
+  ctx.fillText(hdr('PVQ-RR · ' + new Date().toISOString().slice(0, 10)), pad, 64);
+  ctx.fillStyle = C('--ink');
+  ctx.font = '600 30px ' + serif;
+  ctx.fillText(t('results_title'), pad, 104);
+  ctx.font = '400 15px ' + sans;
+  mratLines.forEach((ln, i) => ctx.fillText(ln, pad, 132 + i * 22));
+  // wheel
+  const pt = (th, r) => [wcx + r * Math.sin(th * Math.PI / 180), wcy - r * Math.cos(th * Math.PI / 180)];
+  const rad = th => (th - 90) * Math.PI / 180;
+  ctx.strokeStyle = C('--line-strong'); ctx.setLineDash([3, 4]); ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.arc(wcx, wcy, ZR * ws, 0, 2 * Math.PI); ctx.stroke();
+  ctx.setLineDash([]);
+  for(const q of QUAD_SPANS){
+    const a1 = q.from * SEC + GAP / 2, a2 = q.to * SEC - GAP / 2;
+    ctx.strokeStyle = C('--q-' + q.id); ctx.lineWidth = 5; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.arc(wcx, wcy, 291 * ws, rad(a1), rad(a2)); ctx.stroke();
+    ctx.fillStyle = C('--q-' + q.id); ctx.font = '600 15px ' + sans;
+    const right = q.id === 'openness' || q.id === 'enhancement';
+    const top = q.id === 'openness' || q.id === 'transcendence';
+    ctx.textAlign = right ? 'right' : 'left';
+    ctx.fillText(DATA.higher_order.find(h => h.id === q.id).name[state.lang],
+      right ? colX - 34 : 26, top ? headerBottom + 34 : wheelBottom - 20);
+  }
+  for(const v of CIRCLE){
+    const sv = sc.byId[v.id], k = v.order;
+    const a1 = k * SEC + GAP / 2, a2 = (k + 1) * SEC - GAP / 2, mid = (k + 0.5) * SEC;
+    const cl = Math.max(-2.5, Math.min(2.5, sv.centered));
+    const r = (ZR + cl / 2.5 * SPAN) * ws;
+    let rI = Math.min(ZR * ws, r), rO = Math.max(ZR * ws, r);
+    if(rO - rI < 1.5) rO = rI + 1.5;
+    ctx.fillStyle = C(hueVar(v));
+    ctx.globalAlpha = sv.centered < 0 ? 0.45 : 1;
+    ctx.beginPath();
+    ctx.arc(wcx, wcy, rO, rad(a1), rad(a2));
+    ctx.arc(wcx, wcy, rI, rad(a2), rad(a1), true);
+    ctx.closePath(); ctx.fill();
+    ctx.globalAlpha = 1;
+    const name = v.name[state.lang];
+    const lines = (!zh && name.includes('–'))
+      ? [name.slice(0, name.indexOf('–') + 1), name.slice(name.indexOf('–') + 1)]
+      : [name];
+    const flip = mid > 90 && mid < 270;
+    const rot = (flip ? mid - 180 : mid) * Math.PI / 180;
+    const radii = lines.length === 1 ? [306 * ws] : (flip ? [300 * ws, 312 * ws] : [312 * ws, 300 * ws]);
+    ctx.fillStyle = C('--ink-soft'); ctx.font = '400 ' + (zh ? 13 : 10) + 'px ' + sans; ctx.textAlign = 'center';
+    lines.forEach((ln, li) => {
+      const [lx, ly] = pt(mid, radii[li]);
+      ctx.save(); ctx.translate(lx, ly); ctx.rotate(rot); ctx.fillText(ln, 0, 3); ctx.restore();
+    });
+  }
+  ctx.textAlign = 'center';
+  ctx.fillStyle = C('--ink-soft'); ctx.font = '500 10px ' + sans;
+  ctx.fillText('MRAT', wcx, wcy - 6);
+  ctx.fillStyle = C('--ink'); ctx.font = '500 18px ' + sans;
+  ctx.fillText(fmt2(sc.mrat), wcx, wcy + 14);
+  // ranked list
+  const ranked = sc.values.slice().sort((a, b) => b.centered - a.centered);
+  ctx.textAlign = 'left'; ctx.fillStyle = C('--ink-soft'); ctx.font = '600 10px ' + sans;
+  ctx.fillText(hdr(t('col_value')), colX + 18, rankTop + 8);
+  ctx.textAlign = 'right';
+  ctx.fillText(hdr(t('col_centered')), colX + 322, rankTop + 8);
+  ctx.fillText(hdr(t('col_raw')), colX + colW, rankTop + 8);
+  const barX = colX + 186, barW = 84;
+  ranked.forEach((sv, i) => {
+    const top = rankTop + 14 + i * rowH, ry = top + 16;
+    const v = VBYID[sv.id];
+    if(i){ ctx.fillStyle = C('--line'); ctx.fillRect(colX, top, colW, 1); }
+    ctx.fillStyle = C(hueVar(v));
+    ctx.fillRect(colX, ry - 9, 10, 10);
+    ctx.fillStyle = C('--ink'); ctx.font = '400 12px ' + sans; ctx.textAlign = 'left';
+    let nm = v.name[state.lang];
+    while(ctx.measureText(nm).width > 160 && nm.length > 2) nm = nm.slice(0, -2) + '…';
+    ctx.fillText(nm, colX + 18, ry);
+    ctx.fillStyle = C('--line-strong'); ctx.fillRect(barX + barW / 2, ry - 11, 1, 14);
+    const bw = Math.min(Math.abs(sv.centered), 2.5) / 2.5 * (barW / 2);
+    ctx.fillStyle = C(hueVar(v));
+    ctx.fillRect(sv.centered >= 0 ? barX + barW / 2 : barX + barW / 2 - bw, ry - 8, bw, 8);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = C('--ink'); ctx.fillText(fmt2s(sv.centered), colX + 322, ry);
+    ctx.fillStyle = C('--ink-soft'); ctx.fillText(fmt2(sv.raw), colX + colW, ry);
+  });
+  // higher-order block
+  ctx.textAlign = 'left'; ctx.fillStyle = C('--ink-soft'); ctx.font = '600 11px ' + sans;
+  ctx.fillText(hdr(t('higher_title')), pad, higherTop + 12);
+  sc.higher.forEach((h, i) => {
+    const top = higherTop + 24 + i * 26, ry = top + 17;
+    const hd = DATA.higher_order.find(x => x.id === h.id);
+    ctx.fillStyle = C('--line'); ctx.fillRect(pad, top, W - 2 * pad, 1);
+    ctx.fillStyle = C('--q-' + h.id);
+    ctx.fillRect(pad, ry - 9, 10, 10);
+    ctx.fillStyle = C('--ink'); ctx.font = '400 13px ' + sans; ctx.textAlign = 'left';
+    ctx.fillText(hd.name[state.lang], pad + 18, ry);
+    ctx.textAlign = 'right';
+    ctx.fillText(fmt2s(h.centered), W - pad - 52, ry);
+    ctx.fillStyle = C('--ink-soft'); ctx.fillText(fmt2(h.raw), W - pad, ry);
+  });
+  // notes
+  ctx.textAlign = 'left'; ctx.fillStyle = C('--ink-soft');
+  ctx.font = '400 12px ' + sans;
+  borderLines.forEach((ln, i) => ctx.fillText(ln, pad, borderTop + i * 18));
+  methodLines.forEach((ln, i) => ctx.fillText(ln, pad, methodTop + i * 18));
+  ctx.font = '400 11px ' + sans;
+  licenseLines.forEach((ln, i) => ctx.fillText(ln, pad, licTop + i * 18));
+  canvas.toBlob(b => { if(b) download('pvqrr-results.png', b); }, 'image/png');
+}
+
+/* ---------- navigation ---------- */
+function clearAdvance(){ if(advanceTimer){ clearTimeout(advanceTimer); advanceTimer = null; } }
+function goItem(n){
+  clearAdvance();
+  state.cursor = n; state.screen = 'items';
+  save(); render();
+}
+function nextFrom(n){
+  clearAdvance();
+  if(n >= 57){ state.screen = 'review'; }
+  else { state.cursor = n + 1; }
+  save(); render();
+}
+function answer(r){
+  if(state.screen !== 'items') return;
+  const n = state.cursor;
+  clearAdvance();
+  state.answers[String(n)] = r;
+  save(); render();
+  advanceTimer = setTimeout(()=>nextFrom(n), RM.matches ? 0 : 220);
+}
+function startOver(){
+  if(!confirm(t('confirm_clear'))) return;
+  clearAdvance();
+  state.answers = {}; state.gender = null; state.cursor = 1; state.screen = 'start';
+  wordingWarn = false;
+  save(); render();
+}
+
+/* ---------- events ---------- */
+document.body.addEventListener('click', e=>{
+  const el = e.target.closest('[data-action]');
+  if(!el) return;
+  const act = el.dataset.action;
+  if(act === 'lang'){ state.lang = el.dataset.lang; save(); render(); }
+  else if(act === 'wording'){ state.gender = el.dataset.g; wordingWarn = false; save(); render(); }
+  else if(act === 'begin'){
+    if(!state.gender){ wordingWarn = true; render(); return; }
+    goItem(firstUnanswered() || 1);
+  }
+  else if(act === 'resume'){
+    if(!state.gender){ wordingWarn = true; render(); return; }
+    const n = firstUnanswered();
+    if(n === null){ state.screen = 'review'; save(); render(); }
+    else goItem(n);
+  }
+  else if(act === 'startover'){ startOver(); }
+  else if(act === 'answer'){ answer(Number(el.dataset.rating)); }
+  else if(act === 'back'){ if(state.cursor > 1) goItem(state.cursor - 1); }
+  else if(act === 'goto'){ goItem(Number(el.dataset.n)); }
+  else if(act === 'results'){ state.screen = 'results'; save(); render(); }
+  else if(act === 'pick'){ pick(el.dataset.value); }
+  else if(act === 'csv'){ exportCSV(); }
+  else if(act === 'json'){ exportJSON(); }
+  else if(act === 'png'){ exportPNG(); }
+});
+document.body.addEventListener('mouseover', e=>{
+  if(!FINE.matches || state.screen !== 'results') return;
+  const el = e.target.closest('.hit');
+  if(!el || !lastScore) return;
+  document.getElementById('detail').innerHTML = detailCard(el.dataset.value, lastScore);
+  setHub(el.dataset.value, lastScore);
+});
+document.body.addEventListener('mouseout', e=>{
+  if(!FINE.matches || state.screen !== 'results' || !lastScore) return;
+  const el = e.target.closest('.hit');
+  if(!el) return;
+  document.getElementById('detail').innerHTML = detailCard(sel, lastScore);
+  setHub(sel, lastScore);
+});
+document.addEventListener('keydown', e=>{
+  if(state.screen !== 'items') return;
+  if(e.metaKey || e.ctrlKey || e.altKey) return;
+  if(e.key >= '1' && e.key <= '6'){ answer(Number(e.key)); }
+  else if(e.key === 'ArrowLeft'){ if(state.cursor > 1) goItem(state.cursor - 1); }
+  else if(e.key === 'ArrowRight'){ if(state.answers[String(state.cursor)]) nextFrom(state.cursor); }
+});
+
+render();
+</script>
+</body>
+</html>
