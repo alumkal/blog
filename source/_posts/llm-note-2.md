@@ -3,7 +3,7 @@ title: LLM 学习笔记（二）：从头训练 LLM 的简要流程
 date: 2024/10/11
 updated: 2024/10/11
 mathjax: true
-tags: [AI, 深度学习, LLM]
+tags: [AI]
 ---
 
 本章以 [Llama 3](https://arxiv.org/abs/2407.21783) 为讨论对象。

@@ -3,7 +3,7 @@ title: 黑科技：如何向 Transformers 中的模型传递注意力掩码矩�
 date: 2025/4/9
 updated: 2025/4/9
 mathjax: true
-tags: [AI, 深度学习, LLM]
+tags: [AI]
 ---
 
 由于 Transformer 本质上是位置无关的，因此通过正确设置 positional embedding 和 attention mask，我们可以把多个“序列”合并到一个序列里进行推理。

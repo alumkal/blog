@@ -2,7 +2,7 @@
 title: 我们需要结构化的 Agentic Coding 吗？
 date: 2026/06/04
 updated: 2026/06/04
-tags: [AI, LLM, 原创]
+tags: [AI, 原创]
 ---
 
 > 本文纯人工撰写，无 LLM 成分。请放心阅读。

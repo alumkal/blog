@@ -3,7 +3,7 @@ title: LLM 学习笔记（一）：Transformer 模型的三种架构
 date: 2024/9/21
 updated: 2024/9/21
 mathjax: true
-tags: [AI, 深度学习, LLM]
+tags: [AI]
 ---
 
 Transformer 模型通常采用三种主要架构：encoder-decoder、encoder-only 和 decoder-only。
